@@ -24,7 +24,7 @@ printf '%s revision=%s\n' "$*" "$APP_REVISION" >> "$CALLS"
 [[ "$*" == 'compose --project-name solovibe-rehearsal '* ]] || exit 98
 case "$*" in
   *'build app'*) [[ "$FAIL_AT" != build ]] ;;
-  *'run --rm --no-deps migrate'*) [[ "$FAIL_AT" != migrate ]] ;;
+  *'run -T --rm --no-deps migrate'*) [[ "$FAIL_AT" != migrate ]] ;;
   *'exec -T app node -e'*) [[ "$FAIL_AT" != health ]] ;;
   *'up -d --no-deps --no-build'*'app'*)
     if [[ "$FAIL_AT" == replace && ! -f "$MARKER" ]]; then touch "$MARKER"; exit 1; fi ;;
