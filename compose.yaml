@@ -1,0 +1,56 @@
+name: solovibe-local
+x-app-environment: &app-environment
+  DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+  APP_URL: ${APP_URL:-http://localhost:3000}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Run pnpm env:init}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5.6-terra}
+  OPENAI_IMAGE_MODEL: ${OPENAI_IMAGE_MODEL:-gpt-image-1.5}
+  COMPOSIO_API_KEY: ${COMPOSIO_API_KEY:-}
+  R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+  R2_ENDPOINT: ${R2_ENDPOINT:-https://${R2_ACCOUNT_ID:-unset}.r2.cloudflarestorage.com}
+  R2_BUCKET: ${R2_BUCKET:-}
+  R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+  R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+
+services:
+  db:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-solovibe}
+      POSTGRES_USER: ${POSTGRES_USER:-solovibe}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run pnpm env:init}
+    ports: ["127.0.0.1:${POSTGRES_PORT:-15432}:5432"]
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    image: solovibe-local:dev
+    build: .
+    command: ["node", "migrate.cjs"]
+    environment: *app-environment
+    depends_on:
+      db: {condition: service_healthy}
+    restart: "no"
+  app:
+    image: solovibe-local:dev
+    build: .
+    environment: *app-environment
+    ports: ["127.0.0.1:${APP_PORT:-3000}:3000"]
+    volumes: [file-data:/app/storage]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+volumes:
+  postgres-data:
+  file-data:
