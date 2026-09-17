@@ -19,7 +19,7 @@ compose config --quiet
 compose build app
 compose up -d --wait --wait-timeout 120 db
 # A migration failure exits before replacing the running app.
-compose run -T --rm --no-deps migrate
+compose run -T --rm --no-deps migrate </dev/null
 previous=$(readlink -f "$root/current" 2>/dev/null || true)
 rollback_compatible=false
 if tr -d '\r' < "$root/runtime.env" | grep -x 'APP_ROLLBACK_COMPATIBLE=1' > /dev/null; then rollback_compatible=true; fi
