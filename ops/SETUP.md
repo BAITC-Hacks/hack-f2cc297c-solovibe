@@ -1,6 +1,6 @@
 # Rehearsal delivery
 
-The rehearsal repository deploys `main` to the assigned server after GitHub installs dependencies, runs `pnpm check`, builds the application and validates the release scripts. CI archives the exact successful Git SHA, uploads it over SSH and asks the server to build that source. No application image registry or server-side Git credential is involved.
+GitHub Actions cannot currently start jobs because the repository owner's account is locked for billing. Ordinary pushes therefore do not invoke the workflow. Rehearsal delivery is manual after a local `pnpm check`, `pnpm build`, commit and push: `.private/manual-deploy.py` archives the exact pushed `main` SHA, uploads it over SSH and asks the server to build that source. No application image registry or server-side Git credential is involved. The workflow remains available only through manual dispatch if Actions becomes available again.
 
 ## Fixed environment
 
@@ -27,7 +27,7 @@ Repository secrets:
 - `SSH_PRIVATE_KEY`: the complete dedicated `ci-deploy-rehearsal` private key.
 - `SSH_KNOWN_HOSTS`: `[104.207.93.242]:22022` followed by the verified ED25519 host key.
 
-The workflow fails visibly when required SSH configuration is absent. Never print either secret in CI logs or store it in the repository.
+The workflow fails visibly when required SSH configuration is absent. The local manual helper uses the same dedicated key from the workspace's ignored `.private/` directory. Never print either secret or store it in the Git repository.
 
 ## Server runtime
 
@@ -43,7 +43,7 @@ Changing `POSTGRES_PASSWORD` after the database volume is initialized does not c
 
 A build or migration failure leaves the previous app running. A replacement failure restores the previous app only when `APP_ROLLBACK_COMPATIBLE=1` is explicitly present and the previous release is available; database migrations are never reversed automatically. Do not delete production volumes or the migration ledger to recover a failed release.
 
-Inspect a deployment with the GitHub Actions run, `/opt/solovibe-rehearsal/current/revision`, `docker compose ... ps`, application logs and `https://104.207.93.242/api/health`. A successful local or CI build alone does not prove that the server revision is live.
+Run `python .private/manual-deploy.py` from the workspace root after the pushed `main` commit passes local checks. Inspect a deployment with `/opt/solovibe-rehearsal/current/revision`, `docker compose ... ps`, application logs and `https://104.207.93.242/api/health`. A successful local build alone does not prove that the server revision is live.
 
 ## Local commands
 

@@ -1,12 +1,6 @@
-name: Check and deploy from source
+name: Check and deploy from source (manual Actions)
 
 on:
-  pull_request:
-    branches: [main]
-    paths-ignore: ["README.md", "ops/*.md", "video/**"]
-  push:
-    branches: [main]
-    paths-ignore: ["README.md", "ops/*.md", "video/**"]
   workflow_dispatch:
 
 permissions:
